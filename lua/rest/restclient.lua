@@ -65,8 +65,8 @@ function RestClient:Get( pathPart, args )
 		if not response then response = status:match( "HTTP/1%.1%s%d%d%d%s(.-)$" ) end
 	end
 
-	--return { body = response, code = code, status = status, header = header }
-	return response, code
+	return { body = response, code = code, status = status, header = header }
+	--return response, code
 end
 
 function RestClient:Post( pathPart, args )
@@ -92,8 +92,8 @@ function RestClient:Post( pathPart, args )
 		if not response then response = status:match( "HTTP/1%.1%s%d%d%d%s(.-)$" ) end
 	end
 
-	--return { body = response, code = code, status = status, header = header }
-	return response, code
+	return { body = response, code = code, status = status, header = header }
+	--return response, code
 end
 
 function RestClient:Delete( pathPart, args )
@@ -134,8 +134,8 @@ function RestClient:Delete( pathPart, args )
 		if not response then response = status:match( "HTTP/1%.1%s%d%d%d%s(.-)$" ) end
 	end
 
-	--return { body = response, code = code, status = status, header = header }
-	return response, code
+	return { body = response, code = code, status = status, header = header }
+	--return response, code
 end
 
 function RestClient:FormatUrl( url, options )
