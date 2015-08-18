@@ -1,15 +1,31 @@
 ----------------------------------------------------------------------
--- RestClient:
--- A library that simplifies interaction with REST APIs.
+-- RestClient: A library that simplifies interaction with REST APIs.
+-- Modified: 08/18/2015
+-- Usage:
+--	local rest = require( "restclient" )("http://server.com/api")
+--
+--	local res = rest:Get( "people/address" )
+--	if res.success then
+--		-- The REST GET was successful
+--		-- 'res.body' contains the GET response
+--	else
+--		-- Error occured deal with that here
+--	end
+--	local res = rest:Post( "people", { data = { name = "Peter Griffin", address = "31 Spooner Street", city = "Quahog", state = "Rhode Island", zipcode = "02860" } } )
+--	if res.success then
+--		-- The REST POST was successful
+--		-- 'res.body' contains the POST response
+--	else
+--		-- Error occured deal with that here
+--	end
 ----------------------------------------------------------------------
 
--- Deps:
 local socket	= require( "socket" )
 local http		= require( "socket.http" )
 local json		= require( "json" )
 local class		= require( "pl.class" )
 local utils		= require( "pl.utils" )
-local pretty	= require( "pl.pretty" )
+--local pretty	= require( "pl.pretty" )
 
 local function UrlEncode( urlParameters )
 	urlParameters = tostring( urlParameters )
@@ -33,14 +49,37 @@ local function FormEncode( form )
 	end
 end
 
+---	Checks if the HTTP status code is in the error range. code range: >= 200 and <=299.
+--	@param code {number} Response code from Get(), Post(), and Delete()
+--	@returns {boolean} True if there is an error, else false
+local function Success( code )
+	if code >= 200 and code <= 299 then
+		return true
+	else
+		return false
+	end
+end
+
 local RestClient = class()
 
+---	Constructor
+--	@param host {string} The prefix URL used for all methods. This should include the server and any prefix. (e.g. http://myserver.domain.com/api)
 function RestClient:_init( host )
 	utils.assert_string( 1, host )
 	self.host = host
 end
 
----
+--- Sends a HTTP GET request
+--	@param pathPart {string} The URL to send the GET request too. This will be appended to the self.host.
+--	@param args {table} [OPT] Table of config options. The available keys are:
+--		query {table} A table of query parameters. It will be sent as query parameters in the URL. It can be in 2 forms
+--			1. Array of ordered { { name = "name1", value = "value1" }, { name = "name2", value = "value2" } }
+--			2. Unordered map of name -> value { field1 = "value1", field2 = "value2", ... }
+--		format {string} How is the response to be treated. By default "content-type" is used to determin how to decode the response.
+--			Only "json" and "raw" are currently supported.
+--	@returns response {table/string} Either a table that has been decoded or the raw data as a string
+--	@returns code {number} The HTTP code
+--	@returns headers {table} The HTTP headers
 function RestClient:Get( pathPart, args )
 	utils.assert_string( 1, pathPart )
 	args = args or {}
@@ -65,10 +104,21 @@ function RestClient:Get( pathPart, args )
 		if not response then response = status:match( "HTTP/1%.1%s%d%d%d%s(.-)$" ) end
 	end
 
-	return { body = response, code = code, status = status, header = header }
+	return { body = response, code = code, status = status, header = header, success = Success( code ) }
 	--return response, code
 end
 
+--- Sends a HTTP POST request
+--	@param pathPart {string} The URL to send the POST request too. This will be appended to the self.host.
+--	@param args {table} [OPT] Table of config options. The available keys are:
+--		data {table} A table of data to send with the POST. It will be form encoded and sent as "form-urlencoded". It can be in 2 forms
+--			1. Array of ordered { { name = "name1", value = "value1" }, { name = "name2", value = "value2" } }
+--			2. Unordered map of name -> value { field1 = "value1", field2 = "value2", ... }
+--		format {string} How is the response to be treated. By default "content-type" is used to determin how to decode the response.
+--			Only "json" and "raw" are currently supported.
+--	@returns response {table/string} Either a table that has been decoded or the raw data as a string
+--	@returns code {number} The HTTP code
+--	@returns headers {table} The HTTP headers
 function RestClient:Post( pathPart, args )
 	utils.assert_string( 1, pathPart )
 	args = args or {}
@@ -92,10 +142,20 @@ function RestClient:Post( pathPart, args )
 		if not response then response = status:match( "HTTP/1%.1%s%d%d%d%s(.-)$" ) end
 	end
 
-	return { body = response, code = code, status = status, header = header }
+	return { body = response, code = code, status = status, header = header, success = Success( code ) }
 	--return response, code
 end
 
+--- Sends a HTTP DELETE request
+--	@param pathPart {string} The URL to send the DELETE request too. This will be appended to the self.host.
+--	@param args {table} [OPT] Table of config options. The available keys are:
+--		data {table} A table of data to send with the DELETE. It will be form encoded and sent as "form-urlencoded". It can be in 2 forms
+--			1. Array of ordered { { name = "name1", value = "value1" }, { name = "name2", value = "value2" } }
+--			2. Unordered map of name -> value { field1 = "value1", field2 = "value2", ... }
+--		format {string} How is the response to be treated. By default "content-type" is used to determin how to decode the response.
+--			Only "json" and "raw" are currently supported.
+--	@returns response {table/string} Either a table that has been decoded or the raw data as a string
+--	@returns code {number} The HTTP code
 function RestClient:Delete( pathPart, args )
 	utils.assert_string( 1, pathPart )
 	args = args or {}
@@ -134,7 +194,7 @@ function RestClient:Delete( pathPart, args )
 		if not response then response = status:match( "HTTP/1%.1%s%d%d%d%s(.-)$" ) end
 	end
 
-	return { body = response, code = code, status = status, header = header }
+	return { body = response, code = code, status = status, header = header, success = Success( code ) }
 	--return response, code
 end
 
