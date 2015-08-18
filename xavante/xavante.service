@@ -1,0 +1,10 @@
+[Unit]
+Description=Lua HTTP 1.1 Web server that uses a modular architecture based on URI mapped handlers.
+
+[Service]
+ExecStart=/usr/local/bin/wsapi --port=8080 --op /var/xavante
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target
